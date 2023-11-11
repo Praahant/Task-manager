@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+    <style>
+        body{
+            background-color: rgb(22, 21, 21);
+            color: rgb(109, 152, 189);
+        }
+        input{
+            background-color: rgb(27, 26, 25);
+            color: bisque;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        #left {
+            text-align: center;
+            font-size: 2em;
+        }
+        #date {
+            font-size: 3em;
+            font-weight: bold;
+            color: #ff0000;
+        }
+        #progressList{
+            list-style: none;
+            padding: 0;
+            font-style: italic;
+            margin-left: 25px;
+        }
+        #checklist {
+            max-width: 40%;
+            text-align: left;
+            font-size: 1.2em;
+                         }
+        .task {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .task input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        input{
+            border-radius: 50px;
+            border: none;
+            padding: 5px 10px;
+            font-size: medium;
+        }
+        #reset {
+            margin-top: 10px;
+            color: antiquewhite;
+            background-color: #ff0000;
+            border-radius: 50px;
+            margin-left: 25px;
+            border: none;
+            padding: 5px 10px;
+            font-size: medium;
+        }
+        .pursuit{
+            font-size: 16px;
+            align-self: center;
+            font-style: italic;
+            color: #938c8c;
+        }
+        #Add{
+            color: rgb(98, 101, 104);
+            background-color: aqua;
+            border-radius: 50px;
+            margin-left: 5px;
+            border: none;
+            padding: 5px 10px;
+            font-size: medium;
+        }
+        #quote{
+            max-width: 100%;
+            font-size: 16px;
+            font-style: italic;
+            color: #947f7f;
+        }
+        #PW{
+            background-color: rgb(0, 0, 0);
+            border-radius: 50px;
+            margin-left: 5px;
+            border: none;
+          color: wheat;
+            padding: 5px 10px;
+            font-size: medium;
+        }
+        .quotebtn{
+            opacity: 0.5;
+            border-radius: 5px;
+            background-color: rgb(109, 152, 189);
+            padding: 5px;      
+          }
+    </style>
+</head>
+<body>
+   <div class="container">
+
+    
+        
+        <div id="checklist">
+            <p class="pursuit">You got a dream, you gotta protect it. When people can't do something themselves, they're gonna tell you that you can't do it. You want something, go get it.</p>
+          
+            <h2>Daily Progress</h2>
+            <p id="streak"></p><button class="ustreak" onclick="updateStreak()">Update</button>
+            <p id="progressList">
+            </p>
+            <div class="task">
+                <input type="checkbox" id="newTaskCompleted">
+                <input type="text" id="newTask" placeholder="Add a new task" onkeydown="if (event.keyCode === 13) addTask()">
+                <button id="Add" onclick="addTask()">Add</button>
+            </div>
+            <button id="reset" onclick="clearAllTasks()">Clear All</button>
+            <a id="PW" target="_blank" href="https://www.pw.live/study/batches/study">PW</a>
+                
+           
+        </div>
+        <div id="left">
+            <div>Days left- <div id="date"></div> <button class="quotebtn" onclick="getQuote()">New quote</button></div>
+            <div id=""> 
+                 <p id="quote"></p>
+            </div>
+            
+        </div>
+        
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // API
+        function getQuote() {
+        var category = 'inspirational'
+        let quote = '';
+$.ajax({
+    method: 'GET',
+    url: 'https://api.api-ninjas.com/v1/quotes?category=' + category,
+    headers: { 'X-Api-Key': 'pxDKDt92tTeKbGKusKt7kA==mDzs02nsT3hkOkN0'},
+    contentType: 'application/json',
+    success: function(result) {
+        console.log(result);
+        quote = result[0].quote;
+        const quoteElement = document.getElementById("quote");
+        quoteElement.textContent = quote;
+    },
+    error: function ajaxError(jqXHR) {
+        console.error('Error: ', jqXHR.responseText);
+    }
+});
+}
+getQuote();
+// api end
+// streak days
+var s=0;
+function updateStreak() {
+    s++;
+    localStorage.setItem("streak", s);
+    s=getStreak();
+    var streakElement = document.getElementById("streak");
+    streakElement.textContent = ` ${getStreak()} days`;
+}
+function getStreak() {
+    s = localStorage.getItem("streak");
+    if (s === null) {
+        s = 0;
+    }
+    return s;
+}
+var streakElement = document.getElementById("streak");
+streakElement.textContent = ` ${getStreak()} days`;
+// end streak days
+
+        const now = new Date();
+        const futureDate = new Date("February 3, 2024");
+        const diffTime = Math.abs(futureDate - now);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        const dateElement = document.getElementById("date");
+        dateElement.textContent = ` ${diffDays}`;
+
+        const progressList = document.getElementById("progressList");
+        const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+        savedTasks.forEach(task => addTaskToDOM(task));
+
+        function addTask() {
+    const newTaskText = document.getElementById("newTask").value;
+    if (newTaskText) {
+        const newTaskCompleted = document.getElementById("newTaskCompleted").checked;
+        const newTask = { text: newTaskText, completed: newTaskCompleted };
+        addTaskToDOM(newTask);
+        savedTasks.push(newTask);
+        localStorage.setItem("tasks", JSON.stringify(savedTasks));
+        document.getElementById("newTask").value = "";
+        document.getElementById("newTaskCompleted").checked = false;
+    }
+}
+function saveTasksToLocalStorage(tasks) {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function clearAllTasks() {
+    progressList.innerHTML = "";
+    savedTasks.length = 0;
+    localStorage.removeItem("tasks");
+}
+function addTaskToDOM(task) {
+    const taskItem = document.createElement("li");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.completed;
+    taskItem.appendChild(checkbox);
+    taskItem.appendChild(document.createTextNode(task.text));
+    progressList.appendChild(taskItem);
+
+    // Add event listener to the checkbox to handle changes
+    checkbox.addEventListener("change", function () {
+        task.completed = checkbox.checked; // Update the task's status
+        saveTasksToLocalStorage(savedTasks); // Save the updated tasks to local storage
+    });
+}
+
+    </script>
+</body>
+</html>
